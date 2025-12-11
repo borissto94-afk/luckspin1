@@ -2,78 +2,103 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <title>LuckSpin – $250k Jackpot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>LuckSpin</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body {margin:0;background:#0a0a1f;color:#fff;font-family:system-ui;text-align:center;padding:20px;}
-    h1 {font-size:48px;background:linear-gradient(90deg,#00ff9d,#00b8ff);-webkit-background-clip:text;color:transparent;}
-    .jackpot {font-size:62px;font-weight:900;color:#00ff9d;margin:30px 0;}
-    .btn {background:linear-gradient(45deg,#00ff9d,#00b8ff);color:#000;padding:20px;border-radius:18px;font-weight:900;font-size:22px;margin:15px 0;cursor:pointer;}
-    .bal {font-size:30px;margin:20px 0;color:#00b8ff;}
+    body {margin:0;background:#0a001f;color:#fff;font-family:system-ui;text-align:center;padding:20px;background:radial-gradient(circle at top, #1a0040, #000);}
+    h1 {font-size:52px;margin:10px;background:linear-gradient(90deg,#00ffff,#00ff9d);-webkit-background-clip:text;color:transparent;}
+    .jack {font-size:64px;font-weight:900;color:#00ff9d;margin:30px 0;letter-spacing:2px;}
+    .bal {font-size:32px;margin:15px;color:#00ffff;}
+    .btn {background:linear-gradient(45deg,#00ff9d,#0088ff);color:#000;padding:22px;border-radius:20px;font-weight:900;font-size:24px;margin:15px 0;cursor:pointer;box-shadow:0 8px 20px rgba(0,255,150,0.4);}
+    .ref {background:#200040;padding:20px;border-radius:16px;margin:20px 0;}
   </style>
 </head>
 <body>
   <h1>LUCKSPIN</h1>
-  <div class="jackpot">$250,000</div>
-  <div class="bal">Coins: <span id="c">25,000</span> SC</div>
-  <div class="bal">Entries: <span id="e">0</span></div>
-  
-  <div class="btn" onclick="daily()">CLAIM DAILY → +1,000 SC</div>
-  <div class="btn" onclick="invite()">INVITE FRIENDS → 25,000 SC each</div>
-  <div class="btn" onclick="buy()">BUY 100 ENTRIES → $10 USDT</div>
+  <div class="jack" id="jackpot">$250,000</div>
+  <div class="bal">Coins: <span id="coins">25,000</span> SC</div>
+  <div class="bal">Entries: <span id="entries">0</span></div>
+
+  <div class="btn" onclick="claim()">CLAIM DAILY +1,000 SC</div>
+  <div class="btn" onclick="share()">INVITE & GET 25,000 SC</div>
+  <div class="btn" onclick="buy()">BUY 100 ENTRIES – $10</div>
+
+  <div class="ref">
+    <b>Your link:</b><br>
+    <input type="text" id="refLink" value="" readonly style="width:100%;padding:12px;margin:10px 0;background:#000;color:#00ff9d;border:2px solid #00ff9d;border-radius:12px;font-size:16px;">
+    <div class="btn" onclick="copy()">COPY LINK</div>
+  </div>
 
 <script>
   const tg = window.Telegram.WebApp;
   tg.ready();
-  const userId = tg.initDataUnsafe.user?.id || 'test';
-  let data = JSON.parse(localStorage.getItem('luckspin_'+userId) || '{"c":25000,"e":0,"daily":0}');
+  tg.expand();
   
-  function save() {
-    localStorage.setItem('luckspin_'+userId, JSON.stringify(data));
-    document.getElementById('c').innerText = data.c.toLocaleString();
-    document.getElementById('e').innerText = data.e.toLocaleString();
-  }
-
-  window.daily = function() {
-    const today = Math.floor(Date.now()/86400000);
-    if(data.daily < today) {
-      data.c += 1000;
-      data.daily = today;
-      save();
-      tg.HapticFeedback.notificationOccurred('success');
-      alert('🎉 +1,000 SC Daily Bonus!');
-    } else {
-      alert('⏰ Already claimed today!');
-    }
-  }
-
-  window.invite = function() {
-    tg.openTelegramLink('https://t.me/share/url?url=https://'+location.hostname+location.pathname+'?ref='+userId+'&text=🚀 LuckSpin – $250,000 jackpot every 30 days!\n\nJoin my link → get 25,000 SC instantly 🔥');
-  }
-
-  window.buy = function() {
-    if(confirm('Buy 100 entries for $10 USDT?')) {
-      data.e += 100;
-      save();
-      tg.HapticFeedback.notificationOccurred('success');
-      alert('✅ +100 entries! You are in the draw!');
-    }
-  }
+  const userId = tg.initDataUnsafe.user?.id || Math.random();
+  const refId = new URLSearchParams(location.search).get('ref');
+  
+  let user = JSON.parse(localStorage.getItem('luckspin_user_'+userId) || '{"coins":25000,"entries":0,"daily":0,"ref":false}');
 
   // рефералка
-  if(location.search.includes('ref=') && data.c === 25000) {
-    data.c += 25000;
-    save();
-    setTimeout(()=>alert('🎁 +25,000 SC for referral!'), 800);
+  if(refId && refId != userId && !user.ref) {
+    user.coins += 25000;
+    user.ref = true;
+    setTimeout(()=>tg.showAlert('🎉 +25,000 SC за рефералку!'),1000);
   }
 
-  // рост джекпота
-  let base = 250000;
+  // ежедневка
+  window.claim = function() {
+    const today = Math.floor(Date.now()/86400000);
+    if(user.daily < today) {
+      user.coins += 1000;
+      user.daily = today;
+      save();
+      tg.HapticFeedback.notificationOccurred('success');
+      tg.showAlert('🔥 +1,000 SC получено!');
+    } else {
+      tg.showAlert('⏰ Уже забрал сегодня');
+    }
+  }
+
+  // шаринг
+  window.share = function() {
+    const link = `https://t.me/${tg.initDataUnsafe.start_param ? '@'+tg.initDataUnsafe.start_param : 'LuckSpinFreeBot'}?start=ref${userId}`;
+    tg.openTelegramLink('https://t.me/share/url?url='+encodeURIComponent(link)+'&text=🚀 LuckSpin – джекпот $250,000 каждые 30 дней! По моей ссылке сразу +25,000 SC 🔥');
+  }
+
+  // покупка
+  window.buy = function() {
+    tg.showPopup({title:'Покупка',message:'Купить 100 билетов за $10 USDT?',buttons:[{type:'ok'},{type:'cancel'}]}, (btn) => {
+      if(btn === 'ok') {
+        user.entries += 100;
+        save();
+        tg.showAlert('✅ +100 билетов! Ты в розыгрыше!');
+      }
+    });
+  }
+
+  // копирование ссылки
+  window.copy = function() {
+    const link = `https://t.me/LuckSpinFreeBot?start=ref${userId}`;
+    navigator.clipboard.writeText(link);
+    tg.showAlert('Ссылка скопирована!');
+    document.getElementById('refLink').value = link;
+  }
+
+  function save() {
+    localStorage.setItem('luckspin_user_'+userId, JSON.stringify(user));
+    document.getElementById('coins').innerText = user.coins.toLocaleString();
+    document.getElementById('entries').innerText = user.entries;
+    document.getElementById('refLink').value = `https://t.me/LuckSpinFreeBot?start=ref${userId}`;
+  }
+
+  // джекпот растёт
   setInterval(()=>{
-    base += Math.floor(Math.random()*777);
-    document.querySelector('.jackpot').innerText = '$'+base.toLocaleString();
-  }, 2800);
+    const add = Math.floor(Math.random()*900)+100;
+    const current = parseInt(document.getElementById('jackpot').innerText.replace(/[^0-9]/g,'')) + add;
+    document.getElementById('jackpot').innerText = '$'+current.toLocaleString();
+  },3000);
 
   save();
 </script>
