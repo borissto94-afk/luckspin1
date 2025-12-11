@@ -1,118 +1,67 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>LuckSpin – $250,000 Monthly Jackpot</title>
-  <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
-  <script src="https://unpkg.com/@telegram-apps/sdk@1.0.5/dist/telegram-apps.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>LuckSpin – $250k Jackpot</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Inter:wght@400;600;800&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { background: #0d0b1c; color: #fff; font-family: 'Inter'; overflow:hidden; }
-    .container { padding: 20px; text-align:center; }
-    h1 { font-family: 'Orbitron'; font-size: 42px; background: linear-gradient(90deg, #00ff9d, #00b8ff); -webkit-background-clip: text; color: transparent; margin: 20px 0; }
-    .jackpot { font-size: 56px; font-weight: 800; color: #00ff9d; margin: 30px 0; }
-    .balance { font-size: 28px; margin: 20px 0; }
-    .btn { background: linear-gradient(45deg, #00ff9d, #00b8ff); color: #000; font-weight: 800; font-size: 24px; padding: 18px 0; border-radius: 20px; margin: 15px 0; cursor: pointer; }
-    .spin-wheel { width: 320px; height: 320px; margin: 40px auto; background: url('https://i.ibb.co/5Y2tQ8J/wheel.png') center/contain no-repeat; animation: spin 3s linear infinite; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .entries { font-size: 32px; color: #00b8ff; margin: 30px 0; }
-    .referral { background: #1a1735; padding: 20px; border-radius: 16px; margin: 20px 0; }
+    body { margin:0; background:#0f0c29; color:#fff; font-family:system-ui; text-align:center; padding:20px; }
+    h1 { font-size:48px; background:-webkit-linear-gradient(#00ff9d,#0099ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .jackpot { font-size:60px; font-weight:900; color:#00ff9d; margin:30px 0; }
+    .btn { background:linear-gradient(#00ff9d,#0099ff); color:#000; padding:18px; border-radius:16px; font-weight:800; font-size:20px; margin:15px 0; }
+    .balance { font-size:28px; margin:20px; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>LUCKSPIN</h1>
-    <div class="jackpot" id="jackpot">$250,000</div>
-    <div class="balance">Your coins: <span id="coins">0</span> SC</div>
-    <div class="entries">Your entries: <span id="entries">0</span></div>
-    
-    <div class="spin-wheel"></div>
-    
-    <div class="btn" onclick="dailyCheck()">Daily Check-in → 500 SC</div>
-    <div class="btn" onclick="openInvite()">Invite Friends → 25,000 SC each</div>
-    <div class="btn" onclick="deposit()">Deposit USDT → 1,000 SC per $1</div>
-    <div class="btn" onclick="buyEntries()">Buy 100 entries – $10</div>
-    
-    <div class="referral">
-      <b>Your referral link:</b><br>
-      <input type="text" value="" id="reflink" style="width:100%;padding:10px;margin:10px 0;background:#000;color:#00ff9d;border:none;border-radius:10px;" readonly />
-      <div class="btn" onclick="copyRef()">Copy link</div>
-    </div>
-  </div>
+  <h1>LUCKSPIN</h1>
+  <div class="jackpot">$250,000</div>
+  <div class="balance">Coins: <span id="c">0</span> SC</div>
+  <div class="balance">Entries: <span id="e">0</span></div>
+  <div class="btn" onclick="daily()">Daily Bonus → 1000 SC</div>
+  <div class="btn" onclick="invite()">Invite Friends → 25,000 SC each</div>
+  <div class="btn" onclick="entries()">Buy 100 entries → $10</div>
 
-  <script>
-    const userId = Telegram.WebApp.initDataUnsafe.user?.id || 123456;
-    const refParam = new URLSearchParams(window.location.search).get('ref') || 'owner';
-    
-    // Фейковый, но очень красивый рост джекпота
-    let jackpot = 250000;
-    setInterval(() => {
-      jackpot += Math.floor(Math.random() * 777);
-      document.getElementById('jackpot').innerText = '$' + jackpot.toLocaleString();
-    }, 3000);
-
-    // Локальное хранилище (пока без бэка)
-    let data = JSON.parse(localStorage.getItem('luckspin_' + userId) || '{"coins":0,"entries":0,"lastDaily":0,"invited":0}');
-    
-    if (refParam !== 'owner' && !data.referred) {
-      data.coins += 10000;
-      data.referred = true;
-      alert('🎉 +10,000 SC for coming via referral!');
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.ready();
+  const userId = tg.initDataUnsafe.user?.id || 111;
+  let data = JSON.parse(localStorage.getItem('ls_'+userId) || '{"c":25000,"e":0,"d":0}');
+  
+  function save() {
+    localStorage.setItem('ls_'+userId, JSON.stringify(data));
+    document.getElementById('c').innerText = data.c.toLocaleString();
+    document.getElementById('e').innerText = data.e;
+  }
+  
+  function daily() {
+    const today = Date.now() - Date.now()%86400000;
+    if(data.d < today) {
+      data.c += 1000; data.d = today; save();
+      tg.HapticFeedback.notificationOccurred('success');
     }
-
-    // Daily check-in
-    function dailyCheck() {
-      const today = new Date().setHours(0,0,0,0);
-      if (data.lastDaily < today) {
-        data.coins += 500;
-        data.lastDaily = today;
-        save();
-        alert('🎁 +500 SC Daily Bonus!');
-      } else {
-        alert('Already claimed today');
-      }
+  }
+  
+  function invite() {
+    tg.openTelegramLink('https://t.me/share/url?url=https://'+location.hostname+'/?ref='+userId+'&text=Залетай в LuckSpin – джекпот $250k каждые 30 дней! По моей ссылке сразу +25,000 SC 🔥');
+  }
+  
+  function entries() {
+    if(confirm('Buy 100 entries for $10 USDT?')) {
+      data.e += 100; save();
     }
-
-    function openInvite() {
-      Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=https://luckspin.vercel.app?ref=${userId}&text=Я уже в LuckSpin – джекпот $250,000 каждые 30 дней! Заходи по моей ссылке и получи 10,000 SC сразу!`);
-    }
-
-    function deposit() {
-      tonConnectUI.requestTransaction({
-        messages: [{ address: "EQB...твой кошелёк...", amount: "1000000000", payload: btoa(userId) }],
-        validUntil: Math.floor(Date.now() / 1000) + 600
-      });
-    }
-
-    function buyEntries() {
-      if (confirm('Buy 100 entries for $10 USDT?')) {
-        data.entries += 100;
-        save();
-      }
-    }
-
-    function copyRef() {
-      const link = `https://luckspin.vercel.app?ref=${userId}`;
-      navigator.clipboard.writeText(link);
-      alert('Link copied! Each friend = 25,000 SC for both');
-    }
-
-    function save() {
-      localStorage.setItem('luckspin_' + userId, JSON.stringify(data));
-      document.getElementById('coins').innerText = data.coins.toLocaleString();
-      document.getElementById('entries').innerText = data.entries;
-      document.getElementById('reflink').value = `https://t.me/LuckSpinBot?start=ref${userId}`;
-    }
-
-    // TON Connect (замени на свой кошелёк)
-    const tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-      manifestUrl: 'https://luckspin.vercel.app/tonconnect-manifest.json',
-      walletsListSource: 'https://raw.githubusercontent.com/ton-community/wallets-list/main/wallets.json'
-    });
-
-    save(); // init
-  </script>
+  }
+  
+  // стартовый бонус по рефке
+  if(location.search.includes('ref=') && data.c === 25000) {
+    data.c += 25000; save();
+    setTimeout(()=>alert('🎉 +25,000 SC за рефералку!'),1000);
+  }
+  
+  // красивый рост джекпота
+  setInterval(()=>document.querySelector('.jackpot').innerText = '$'+(250000 + Math.floor(Date.now()/1000)%100000).toLocaleString(), 3000);
+  
+  save();
+</script>
 </body>
 </html>
