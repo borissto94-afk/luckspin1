@@ -6,61 +6,75 @@
   <title>LuckSpin – $250k Jackpot</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body { margin:0; background:#0f0c29; color:#fff; font-family:system-ui; text-align:center; padding:20px; }
-    h1 { font-size:48px; background:-webkit-linear-gradient(#00ff9d,#0099ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-    .jackpot { font-size:60px; font-weight:900; color:#00ff9d; margin:30px 0; }
-    .btn { background:linear-gradient(#00ff9d,#0099ff); color:#000; padding:18px; border-radius:16px; font-weight:800; font-size:20px; margin:15px 0; }
-    .balance { font-size:28px; margin:20px; }
+    body {margin:0;background:#0a0a1f;color:#fff;font-family:system-ui;text-align:center;padding:20px;}
+    h1 {font-size:48px;background:linear-gradient(90deg,#00ff9d,#00b8ff);-webkit-background-clip:text;color:transparent;}
+    .jackpot {font-size:62px;font-weight:900;color:#00ff9d;margin:30px 0;}
+    .btn {background:linear-gradient(45deg,#00ff9d,#00b8ff);color:#000;padding:20px;border-radius:18px;font-weight:900;font-size:22px;margin:15px 0;cursor:pointer;}
+    .bal {font-size:30px;margin:20px 0;color:#00b8ff;}
   </style>
 </head>
 <body>
   <h1>LUCKSPIN</h1>
   <div class="jackpot">$250,000</div>
-  <div class="balance">Coins: <span id="c">0</span> SC</div>
-  <div class="balance">Entries: <span id="e">0</span></div>
-  <div class="btn" onclick="daily()">Daily Bonus → 1000 SC</div>
-  <div class="btn" onclick="invite()">Invite Friends → 25,000 SC each</div>
-  <div class="btn" onclick="entries()">Buy 100 entries → $10</div>
+  <div class="bal">Coins: <span id="c">25,000</span> SC</div>
+  <div class="bal">Entries: <span id="e">0</span></div>
+  
+  <div class="btn" onclick="daily()">CLAIM DAILY → +1,000 SC</div>
+  <div class="btn" onclick="invite()">INVITE FRIENDS → 25,000 SC each</div>
+  <div class="btn" onclick="buy()">BUY 100 ENTRIES → $10 USDT</div>
 
 <script>
   const tg = window.Telegram.WebApp;
   tg.ready();
-  const userId = tg.initDataUnsafe.user?.id || 111;
-  let data = JSON.parse(localStorage.getItem('ls_'+userId) || '{"c":25000,"e":0,"d":0}');
+  const userId = tg.initDataUnsafe.user?.id || 'test';
+  let data = JSON.parse(localStorage.getItem('luckspin_'+userId) || '{"c":25000,"e":0,"daily":0}');
   
   function save() {
-    localStorage.setItem('ls_'+userId, JSON.stringify(data));
+    localStorage.setItem('luckspin_'+userId, JSON.stringify(data));
     document.getElementById('c').innerText = data.c.toLocaleString();
-    document.getElementById('e').innerText = data.e;
+    document.getElementById('e').innerText = data.e.toLocaleString();
   }
-  
-  function daily() {
-    const today = Date.now() - Date.now()%86400000;
-    if(data.d < today) {
-      data.c += 1000; data.d = today; save();
+
+  window.daily = function() {
+    const today = Math.floor(Date.now()/86400000);
+    if(data.daily < today) {
+      data.c += 1000;
+      data.daily = today;
+      save();
       tg.HapticFeedback.notificationOccurred('success');
+      alert('🎉 +1,000 SC Daily Bonus!');
+    } else {
+      alert('⏰ Already claimed today!');
     }
   }
-  
-  function invite() {
-    tg.openTelegramLink('https://t.me/share/url?url=https://'+location.hostname+'/?ref='+userId+'&text=Залетай в LuckSpin – джекпот $250k каждые 30 дней! По моей ссылке сразу +25,000 SC 🔥');
+
+  window.invite = function() {
+    tg.openTelegramLink('https://t.me/share/url?url=https://'+location.hostname+location.pathname+'?ref='+userId+'&text=🚀 LuckSpin – $250,000 jackpot every 30 days!\n\nJoin my link → get 25,000 SC instantly 🔥');
   }
-  
-  function entries() {
+
+  window.buy = function() {
     if(confirm('Buy 100 entries for $10 USDT?')) {
-      data.e += 100; save();
+      data.e += 100;
+      save();
+      tg.HapticFeedback.notificationOccurred('success');
+      alert('✅ +100 entries! You are in the draw!');
     }
   }
-  
-  // стартовый бонус по рефке
+
+  // рефералка
   if(location.search.includes('ref=') && data.c === 25000) {
-    data.c += 25000; save();
-    setTimeout(()=>alert('🎉 +25,000 SC за рефералку!'),1000);
+    data.c += 25000;
+    save();
+    setTimeout(()=>alert('🎁 +25,000 SC for referral!'), 800);
   }
-  
-  // красивый рост джекпота
-  setInterval(()=>document.querySelector('.jackpot').innerText = '$'+(250000 + Math.floor(Date.now()/1000)%100000).toLocaleString(), 3000);
-  
+
+  // рост джекпота
+  let base = 250000;
+  setInterval(()=>{
+    base += Math.floor(Math.random()*777);
+    document.querySelector('.jackpot').innerText = '$'+base.toLocaleString();
+  }, 2800);
+
   save();
 </script>
 </body>
